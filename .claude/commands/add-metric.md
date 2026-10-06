@@ -12,8 +12,8 @@ Follow the existing pattern in `sample-app/dashboard.js`:
    (`count` | `currency` | `percent` | `ms`), `lowerIsBetter`, `previous`,
    `current`, and a 12-point `spark` array of plausible sample values.
 2. Do not touch `renderKpis()`, `formatValue()`, or `deltaIsGood()` unless
-   the new metric needs a genuinely new `unit` type — the existing render
-   path should pick up a new `KPIS` entry automatically.
+   the new metric needs a genuinely new `unit` type. Otherwise, the
+   existing render path already picks up a new `KPIS` entry automatically.
 3. After editing, reload `sample-app/index.html` and confirm the new tile
    renders with a sensible value, a correctly colored delta (respecting
    `lowerIsBetter`), and a sparkline.
