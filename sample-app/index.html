@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pulse — Ops Dashboard</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="viz-root" id="app">
+    <header class="app-header">
+      <h1>Pulse</h1>
+      <p class="app-subtitle">Product &amp; growth snapshot &middot; last 30 days vs prior 30 days</p>
+      <button id="theme-toggle" class="theme-toggle" type="button" aria-pressed="false">
+        Dark mode
+      </button>
+    </header>
+
+    <section class="kpi-row" id="kpi-row" aria-label="Key metrics"></section>
+
+    <section class="charts-row">
+      <div class="card" id="trend-card">
+        <h2 class="card-title">Daily active users</h2>
+        <div class="card-body" id="trend-chart"></div>
+      </div>
+
+      <div class="card" id="channel-card">
+        <h2 class="card-title">Signups by channel</h2>
+        <div class="card-body" id="channel-chart"></div>
+      </div>
+    </section>
+
+    <section class="card table-card">
+      <h2 class="card-title">Channel breakdown</h2>
+      <table id="channel-table" class="data-table">
+        <thead>
+          <tr>
+            <th scope="col">Channel</th>
+            <th scope="col">Prior period</th>
+            <th scope="col">Current period</th>
+            <th scope="col">Change</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </div>
+
+  <script src="dashboard.js"></script>
+</body>
+</html>
