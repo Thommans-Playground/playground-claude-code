@@ -77,3 +77,20 @@ shortcut phrase you type once, instead of writing the whole thing out
 every time. This project has one of these set up for adding a new number
 box to the dashboard. The rule of thumb: the third time you type something
 similar, save it instead.
+
+## Skills versus shortcut phrases
+
+A shortcut phrase is something *you* trigger by name. A skill is a
+packaged set of instructions the assistant can also reach for on its own
+when the situation matches its description. This project has both:
+
+- `add-metric` is a shortcut phrase (`.claude/commands/add-metric.md`).
+  You type it, it runs.
+- `grill-me` and `frontend-design` are skills (`.claude/skills/`).
+  `grill-me` interviews you about a plan before anything is built.
+  `frontend-design` holds the look-and-feel guidance plus this project's
+  rules for styling.
+
+Rule of thumb: if it's a fixed recipe you'll call by name, a shortcut
+phrase is enough. If it's a way of working that should kick in whenever
+the situation fits, make it a skill.

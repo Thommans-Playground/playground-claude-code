@@ -27,7 +27,12 @@ flowchart TD
     C -->|Yes, a real one| E["Write it down"]
 ```
 
-Walk through this project's actual note (`CLAUDE.md`, in the main folder)
+A side note on file names: this project keeps the shared note in
+`AGENTS.md`, which many assistants read, and `CLAUDE.md` simply imports it
+and adds the few things specific to Claude Code. One source of truth, no
+drifting copies.
+
+Walk through this project's actual note (`AGENTS.md`, in the main folder)
 against that test:
 
 | What it says | Why it earned its place |

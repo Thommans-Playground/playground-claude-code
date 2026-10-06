@@ -20,6 +20,8 @@ flowchart TD
 - **The practice dashboard** (`sample-app/`): a small page of charts and
   numbers, built just for trying things out on. It has a few things
   wrong with it on purpose. See the exercises page below.
+- **The assistant's setup**: `AGENTS.md` (shared starting note, imported
+  by `CLAUDE.md`) and `.claude/skills/` (`grill-me`, `frontend-design`).
 - **The session pages** (`docs/`): read in order, or jump to whichever
   one you need:
   - `00-agenda.md`: how the session is meant to run
