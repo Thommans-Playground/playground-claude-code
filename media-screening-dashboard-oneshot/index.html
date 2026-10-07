@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Media Screening Dashboard — Julius Baer</title>
+<style>
+  :root{
+    color-scheme: light;
+    --page-plane:      #f9f9f7;
+    --surface-1:       #fcfcfb;
+    --text-primary:    #0b0b0b;
+    --text-secondary:  #52514e;
+    --text-muted:      #898781;
+    --gridline:        #e1e0d9;
+    --baseline:        #c3c2b7;
+    --border:          rgba(11,11,11,0.10);
+
+    --series-1: #2a78d6; /* blue */
+    --series-2: #eb6834; /* orange */
+    --series-3: #1baf7a; /* aqua */
+    --series-4: #eda100; /* yellow */
+
+    --status-good:     #0ca30c;
+    --status-neutral:  #898781;
+    --status-critical: #d03b3b;
+
+    --radius: 10px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --page-plane:      #0d0d0d;
+      --surface-1:       #1a1a19;
+      --text-primary:    #ffffff;
+      --text-secondary:  #c3c2b7;
+      --text-muted:      #898781;
+      --gridline:        #2c2c2a;
+      --baseline:        #383835;
+      --border:          rgba(255,255,255,0.10);
+
+      --series-1: #3987e5;
+      --series-2: #d95926;
+      --series-3: #199e70;
+      --series-4: #c98500;
+
+      --status-good:     #0ca30c;
+      --status-neutral:  #898781;
+      --status-critical: #e66767;
+    }
+  }
+
+  *{ box-sizing: border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background: var(--page-plane);
+    color: var(--text-primary);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap{
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 28px 20px 64px;
+  }
+
+  header.page-head{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 22px;
+  }
+  header.page-head h1{
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0 0 4px;
+    letter-spacing: -0.01em;
+  }
+  header.page-head p{
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 13.5px;
+  }
+  .brand-mark{
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .brand-chip{
+    width: 34px; height: 34px;
+    border-radius: 9px;
+    background: linear-gradient(135deg, var(--series-1), #15406e);
+    display:flex; align-items:center; justify-content:center;
+    color:#fff; font-weight:700; font-size:14px;
+    flex: none;
+  }
+
+  .stat-row{
+    display:grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 22px;
+  }
+  .stat-tile{
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+  }
+  .stat-tile .label{
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+  }
+  .stat-tile .value{
+    font-size: 24px;
+    font-weight: 700;
+    font-variant-numeric: proportional-nums;
+  }
+  .stat-tile .value.good{ color: var(--status-good); }
+  .stat-tile .value.critical{ color: var(--status-critical); }
+
+  .filter-bar{
+    display:flex;
+    align-items:center;
+    gap: 10px;
+    min-height: 34px;
+    margin-bottom: 18px;
+    font-size: 13.5px;
+    color: var(--text-secondary);
+  }
+  .filter-bar .chip{
+    display:none;
+    align-items:center;
+    gap: 8px;
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 6px 8px 6px 14px;
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+  .filter-bar .chip.active{ display:flex; }
+  .filter-bar .chip button{
+    appearance:none;
+    border:none;
+    background: var(--gridline);
+    color: var(--text-primary);
+    width: 20px; height:20px;
+    border-radius:50%;
+    cursor:pointer;
+    font-size: 13px;
+    line-height:1;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .filter-bar .chip button:hover{ background: var(--baseline); }
+  .filter-bar .hint{ opacity: 0.85; }
+
+  .charts-grid{
+    display:grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-bottom: 26px;
+  }
+  .charts-row{
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .card{
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px 14px;
+  }
+  .card h2{
+    font-size: 14px;
+    font-weight: 700;
+    margin: 0 0 2px;
+  }
+  .card .sub{
+    font-size: 12px;
+    color: var(--text-muted);
+    margin: 0 0 14px;
+  }
+
+  /* Frequency (vertical) chart */
+  .freq-chart{
+    display:flex;
+    align-items:flex-end;
+    gap: 3px;
+    height: 150px;
+    padding: 0 2px;
+    border-bottom: 1px solid var(--baseline);
+    position: relative;
+  }
+  .freq-bar-col{
+    flex: 1 1 0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:flex-end;
+    height: 100%;
+    min-width: 6px;
+    cursor: default;
+    outline: none;
+  }
+  .freq-bar{
+    width: 100%;
+    max-width: 18px;
+    background: var(--series-1);
+    border-radius: 3px 3px 0 0;
+    transition: opacity .15s ease, height .2s ease;
+  }
+  .freq-bar.zero{
+    background: var(--gridline);
+    min-height: 2px;
+  }
+  .freq-axis{
+    display:flex;
+    justify-content:space-between;
+    margin-top: 6px;
+    font-size: 10.5px;
+    color: var(--text-muted);
+  }
+
+  /* Horizontal bar charts */
+  .hbar-chart{
+    display:flex;
+    flex-direction:column;
+    gap: 10px;
+  }
+  .hbar-row{
+    display:flex;
+    align-items:center;
+    gap: 10px;
+  }
+  .hbar-label{
+    flex: 0 0 96px;
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    text-align: right;
+    line-height: 1.25;
+  }
+  .hbar-track{
+    flex: 1;
+    position: relative;
+    height: 22px;
+    background: var(--page-plane);
+    border-radius: 4px;
+    overflow: visible;
+  }
+  .hbar-fill{
+    position:absolute;
+    top:0; left:0;
+    height: 100%;
+    border-radius: 0 4px 4px 0;
+    cursor: pointer;
+    transition: width .25s ease, opacity .15s ease, filter .15s ease;
+    border: none;
+    padding: 0;
+    display:block;
+  }
+  .hbar-fill:hover{ filter: brightness(1.08); }
+  .hbar-fill:focus-visible{ outline: 2px solid var(--text-primary); outline-offset: 2px; }
+  .hbar-value{
+    flex: 0 0 34px;
+    font-size: 12.5px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .legend-note{
+    margin-top: 12px;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  /* Tooltip */
+  #tooltip{
+    position: fixed;
+    pointer-events: none;
+    background: var(--text-primary);
+    color: var(--surface-1);
+    font-size: 12px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    z-index: 50;
+    opacity: 0;
+    transform: translate(-50%, calc(-100% - 10px));
+    transition: opacity .1s ease;
+    white-space: nowrap;
+  }
+  #tooltip.show{ opacity: 1; }
+  #tooltip b{ font-weight: 700; }
+
+  /* Table */
+  .table-card{
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+  }
+  .table-card h2{ font-size: 14px; margin: 0 0 2px; }
+  .table-scroll{
+    overflow-x: auto;
+    margin-top: 12px;
+    border: 1px solid var(--gridline);
+    border-radius: 8px;
+  }
+  table{
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    min-width: 760px;
+  }
+  thead th{
+    text-align: left;
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    color: var(--text-muted);
+    font-weight: 600;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--gridline);
+    position: sticky;
+    top: 0;
+    background: var(--surface-1);
+  }
+  tbody td{
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--gridline);
+    color: var(--text-primary);
+    vertical-align: top;
+  }
+  tbody tr:last-child td{ border-bottom: none; }
+  tbody tr:hover{ background: var(--page-plane); }
+  td.date-col, th.date-col{ white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--text-secondary); }
+  td.headline-col{ max-width: 320px; }
+  .sentiment-tag{
+    display:inline-flex;
+    align-items:center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .sentiment-dot{ width:8px; height:8px; border-radius:50%; flex: none; }
+  .sentiment-tag.Positive .sentiment-dot{ background: var(--status-good); }
+  .sentiment-tag.Positive { color: var(--status-good); }
+  .sentiment-tag.Neutral .sentiment-dot{ background: var(--status-neutral); }
+  .sentiment-tag.Neutral { color: var(--text-secondary); }
+  .sentiment-tag.Negative .sentiment-dot{ background: var(--status-critical); }
+  .sentiment-tag.Negative { color: var(--status-critical); }
+
+  .empty-row td{
+    text-align:center;
+    padding: 24px;
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+
+  footer.foot-note{
+    margin-top: 22px;
+    font-size: 11.5px;
+    color: var(--text-muted);
+    text-align: center;
+  }
+
+  @media (max-width: 860px){
+    .stat-row{ grid-template-columns: repeat(2, 1fr); }
+    .charts-row{ grid-template-columns: 1fr; }
+    .hbar-label{ flex-basis: 78px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="page-head">
+    <div class="brand-mark">
+      <div class="brand-chip">JB</div>
+      <div>
+        <h1>Media Screening Dashboard</h1>
+        <p>Julius Baer — media coverage monitor, 9 Sep – 7 Oct 2026</p>
+      </div>
+    </div>
+  </header>
+
+  <div class="stat-row" id="statRow"></div>
+
+  <div class="filter-bar">
+    <span class="hint">Filter:</span>
+    <div class="chip" id="filterChip">
+      <span id="filterChipText"></span>
+      <button id="filterClearBtn" type="button" aria-label="Clear filter">×</button>
+    </div>
+    <span class="hint" id="filterHint">none — click a bar in Sentiment, Country, or Media Type to filter</span>
+  </div>
+
+  <div class="charts-grid">
+    <div class="card">
+      <h2>Articles per day</h2>
+      <p class="sub">Mentions by publication date across the 30-day window</p>
+      <div class="freq-chart" id="freqChart"></div>
+      <div class="freq-axis" id="freqAxis"></div>
+    </div>
+
+    <div class="charts-row">
+      <div class="card">
+        <h2>Sentiment split</h2>
+        <p class="sub">Click a bar to filter · click again to clear</p>
+        <div class="hbar-chart" id="sentimentChart"></div>
+      </div>
+
+      <div class="card">
+        <h2>Coverage by country</h2>
+        <p class="sub">Click a bar to filter · click again to clear</p>
+        <div class="hbar-chart" id="countryChart"></div>
+      </div>
+
+      <div class="card">
+        <h2>Coverage by media type</h2>
+        <p class="sub">Click a bar to filter · click again to clear</p>
+        <div class="hbar-chart" id="mediaTypeChart"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <h2>All articles</h2>
+    <p class="sub" id="tableSub">Showing 34 of 34 articles</p>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th class="date-col">Date</th>
+            <th>Headline</th>
+            <th>Source</th>
+            <th>Country</th>
+            <th>Media type</th>
+            <th>Sentiment</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <footer class="foot-note">Sample data for demonstration purposes only · 34 media mentions, 9 Sep – 7 Oct 2026</footer>
+</div>
+
+<div id="tooltip" role="status" aria-hidden="true"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- Data ----------
+  var DATA = [
+    {date:"2026-09-09", headline:"Julius Baer expands wealth advisory team in Singapore", source:"SG Business Daily", country:"Singapore", mediaType:"Online News", sentiment:"Positive"},
+    {date:"2026-09-10", headline:"Private banks report steady first-half results, Julius Baer among them", source:"Swiss Finance Journal", country:"Switzerland", mediaType:"Print", sentiment:"Neutral"},
+    {date:"2026-09-10", headline:"Julius Baer executive discusses APAC growth plans on business segment", source:"Pacific Business TV", country:"Hong Kong", mediaType:"Broadcast", sentiment:"Positive"},
+    {date:"2026-09-12", headline:"Industry commentators weigh in on private banking fee structures, Julius Baer named", source:"UK Wealth Social Feed", country:"United Kingdom", mediaType:"Social Media", sentiment:"Neutral"},
+    {date:"2026-09-14", headline:"Julius Baer named finalist in regional private banking awards", source:"Asia Wealth Wire", country:"Singapore", mediaType:"Online News", sentiment:"Positive"},
+    {date:"2026-09-14", headline:"Swiss private banks adapt to new cross-border wealth rules", source:"Alpine Markets Review", country:"Switzerland", mediaType:"Online News", sentiment:"Neutral"},
+    {date:"2026-09-15", headline:"Julius Baer opens enlarged client relationship centre in Hong Kong", source:"Pacific Wealth Times", country:"Hong Kong", mediaType:"Print", sentiment:"Positive"},
+    {date:"2026-09-17", headline:"London wealth managers, including Julius Baer, see steady inflows", source:"UK Finance Digest", country:"United Kingdom", mediaType:"Online News", sentiment:"Neutral"},
+    {date:"2026-09-18", headline:"Julius Baer executive to speak at Singapore FinTech Festival panel", source:"Pacific Business TV", country:"Singapore", mediaType:"Broadcast", sentiment:"Positive"},
+    {date:"2026-09-19", headline:"Online commentary questions pace of digital transformation at legacy private banks, Julius Baer mentioned", source:"Alpine Social Feed", country:"Switzerland", mediaType:"Social Media", sentiment:"Negative"},
+    {date:"2026-09-19", headline:"Asia private banking roundup: assets under management trends", source:"HK Finance Post", country:"Hong Kong", mediaType:"Online News", sentiment:"Neutral"},
+    {date:"2026-09-21", headline:"Julius Baer sponsors sustainability-focused investment forum in Singapore", source:"SG Business Daily", country:"Singapore", mediaType:"Online News", sentiment:"Positive"},
+    {date:"2026-09-22", headline:"Julius Baer reports steady client asset growth in half-year update", source:"UK Finance Digest", country:"United Kingdom", mediaType:"Print", sentiment:"Positive"},
+    {date:"2026-09-23", headline:"A look at private banking succession planning across the industry", source:"Swiss Finance Journal", country:"Switzerland", mediaType:"Online News", sentiment:"Neutral"},
+    {date:"2026-09-24", headline:"Clients cite long wait times for onboarding across several private banks, including Julius Baer", source:"Pacific Social Wire", country:"Hong Kong", mediaType:"Social Media", sentiment:"Negative"},
+    {date:"2026-09-25", headline:"Julius Baer named among top APAC wealth managers in annual survey", source:"Asia Wealth Wire", country:"Singapore", mediaType:"Online News", sentiment:"Positive"},
+    {date:"2026-09-26", headline:"Swiss banking sector outlook discussed on evening business programme", source:"Alpine Business TV", country:"Switzerland", mediaType:"Broadcast", sentiment:"Neutral"},
+    {date:"2026-09-27", headline:"Julius Baer expands sustainable investing product range", source:"UK Finance Digest", country:"United Kingdom", mediaType:"Online News", sentiment:"Positive"},
+    {date:"2026-09-28", headline:"Private banks in Hong Kong navigate shifting regulatory landscape", source:"Pacific Wealth Times", country:"Hong Kong", mediaType:"Print", sentiment:"Neutral"},
+    {date:"2026-09-29", headline:"Social chatter mixed on wealth management fee transparency across the industry", source:"SG Social Feed", country:"Singapore", mediaType:"Social Media", sentiment:"Neutral"},
+    {date:"2026-09-30", headline:"Julius Baer strengthens leadership team with senior hire", source:"Swiss Finance Journal", country:"Switzerland", mediaType:"Online News", sentiment:"Positive"},
+    {date:"2026-10-01", headline:"Julius Baer featured in segment on growth of Asian wealth corridors", source:"UK Business TV", country:"United Kingdom", mediaType:"Broadcast", sentiment:"Positive"},
+    {date:"2026-10-01", headline:"Asia wealth management roundup: hiring trends across major banks", source:"HK Finance Post", country:"Hong Kong", mediaType:"Online News", sentiment:"Neutral"},
+    {date:"2026-10-02", headline:"Julius Baer client assets grow amid strong regional demand", source:"SG Business Daily", country:"Singapore", mediaType:"Online News", sentiment:"Positive"},
+    {date:"2026-10-03", headline:"Commentary questions pace of fee disclosure reform across Swiss private banks, Julius Baer named", source:"Alpine Social Feed", country:"Switzerland", mediaType:"Social Media", sentiment:"Negative"},
+    {date:"2026-10-03", headline:"UK wealth managers prepare for new cross-border reporting rules", source:"UK Finance Digest", country:"United Kingdom", mediaType:"Online News", sentiment:"Neutral"},
+    {date:"2026-10-04", headline:"Julius Baer recognised for client service excellence in Hong Kong", source:"Pacific Wealth Times", country:"Hong Kong", mediaType:"Print", sentiment:"Positive"},
+    {date:"2026-10-05", headline:"Julius Baer deepens partnership with regional fintech for digital onboarding", source:"Asia Wealth Wire", country:"Singapore", mediaType:"Online News", sentiment:"Positive"},
+    {date:"2026-10-05", headline:"Swiss private banking sector sees modest asset growth in Q3", source:"Swiss Finance Journal", country:"Switzerland", mediaType:"Online News", sentiment:"Neutral"},
+    {date:"2026-10-06", headline:"Some clients voice frustration over mobile app downtime, Julius Baer among banks named", source:"UK Social Feed", country:"United Kingdom", mediaType:"Social Media", sentiment:"Negative"},
+    {date:"2026-10-06", headline:"Julius Baer discusses APAC expansion strategy in interview", source:"Pacific Business TV", country:"Hong Kong", mediaType:"Broadcast", sentiment:"Positive"},
+    {date:"2026-10-07", headline:"Julius Baer opens applications for graduate wealth management programme", source:"SG Business Daily", country:"Singapore", mediaType:"Online News", sentiment:"Positive"},
+    {date:"2026-10-07", headline:"Private banking industry group publishes annual membership report, Julius Baer included", source:"Swiss Finance Journal", country:"Switzerland", mediaType:"Print", sentiment:"Neutral"},
+    {date:"2026-10-07", headline:"Julius Baer named a top employer in wealth management by industry survey", source:"UK Finance Digest", country:"United Kingdom", mediaType:"Online News", sentiment:"Positive"}
+  ];
+
+  var COUNTRY_ORDER = ["Singapore", "Switzerland", "Hong Kong", "United Kingdom"];
+  var MEDIA_ORDER = ["Online News", "Print", "Broadcast", "Social Media"];
+  var SENTIMENT_ORDER = ["Positive", "Neutral", "Negative"];
+  var CAT_COLORS = ["var(--series-1)", "var(--series-2)", "var(--series-3)", "var(--series-4)"];
+  var SENTIMENT_COLORS = { Positive: "var(--status-good)", Neutral: "var(--status-neutral)", Negative: "var(--status-critical)" };
+
+  // ---------- State ----------
+  var filter = { dim: null, value: null }; // dim: 'country' | 'mediaType' | 'sentiment'
+
+  // ---------- Helpers ----------
+  function applyFilter(data){
+    if (!filter.dim) return data.slice();
+    return data.filter(function(d){ return d[filter.dim] === filter.value; });
+  }
+
+  function countBy(data, dim, order){
+    var counts = {};
+    order.forEach(function(k){ counts[k] = 0; });
+    data.forEach(function(d){
+      var k = d[dim];
+      counts[k] = (counts[k] || 0) + 1;
+    });
+    return counts;
+  }
+
+  function dateRange(start, end){
+    var days = [];
+    var cur = new Date(start + "T00:00:00");
+    var last = new Date(end + "T00:00:00");
+    while (cur <= last){
+      var y = cur.getFullYear();
+      var m = String(cur.getMonth() + 1).padStart(2, "0");
+      var day = String(cur.getDate()).padStart(2, "0");
+      days.push(y + "-" + m + "-" + day);
+      cur.setDate(cur.getDate() + 1);
+    }
+    return days;
+  }
+
+  function formatShortDate(iso){
+    var parts = iso.split("-");
+    var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    return months[parseInt(parts[1],10)-1] + " " + parseInt(parts[2],10);
+  }
+
+  var ALL_DATES = (function(){
+    var sorted = DATA.map(function(d){return d.date;}).sort();
+    return dateRange(sorted[0], sorted[sorted.length-1]);
+  })();
+
+  // ---------- Tooltip ----------
+  var tooltipEl = document.getElementById("tooltip");
+  function showTooltip(target, html){
+    var r = target.getBoundingClientRect();
+    tooltipEl.innerHTML = "";
+    var strong = document.createElement("b");
+    tooltipEl.appendChild(document.createTextNode(html.label + " "));
+    strong.textContent = html.value;
+    tooltipEl.appendChild(strong);
+    tooltipEl.style.left = (r.left + r.width/2) + "px";
+    tooltipEl.style.top = r.top + "px";
+    tooltipEl.classList.add("show");
+    tooltipEl.setAttribute("aria-hidden", "false");
+  }
+  function hideTooltip(){
+    tooltipEl.classList.remove("show");
+    tooltipEl.setAttribute("aria-hidden", "true");
+  }
+
+  // ---------- Stat tiles ----------
+  function renderStats(){
+    var filtered = applyFilter(DATA);
+    var pos = filtered.filter(function(d){return d.sentiment==="Positive";}).length;
+    var neg = filtered.filter(function(d){return d.sentiment==="Negative";}).length;
+    var countries = new Set(filtered.map(function(d){return d.country;})).size;
+    var tiles = [
+      { label: "Total mentions", value: filtered.length, cls: "" },
+      { label: "Positive coverage", value: pos + " (" + (filtered.length? Math.round(pos/filtered.length*100):0) + "%)", cls: "good" },
+      { label: "Negative coverage", value: neg + " (" + (filtered.length? Math.round(neg/filtered.length*100):0) + "%)", cls: neg>0 ? "critical" : "" },
+      { label: "Markets covered", value: countries, cls: "" }
+    ];
+    var row = document.getElementById("statRow");
+    row.innerHTML = "";
+    tiles.forEach(function(t){
+      var tile = document.createElement("div");
+      tile.className = "stat-tile";
+      var lab = document.createElement("div");
+      lab.className = "label";
+      lab.textContent = t.label;
+      var val = document.createElement("div");
+      val.className = "value" + (t.cls ? " " + t.cls : "");
+      val.textContent = t.value;
+      tile.appendChild(lab);
+      tile.appendChild(val);
+      row.appendChild(tile);
+    });
+  }
+
+  // ---------- Filter bar ----------
+  function renderFilterBar(){
+    var chip = document.getElementById("filterChip");
+    var text = document.getElementById("filterChipText");
+    var hint = document.getElementById("filterHint");
+    if (filter.dim){
+      chip.classList.add("active");
+      var dimLabel = { country: "Country", mediaType: "Media type", sentiment: "Sentiment" }[filter.dim];
+      text.textContent = dimLabel + ": " + filter.value;
+      hint.textContent = "";
+    } else {
+      chip.classList.remove("active");
+      hint.textContent = "none — click a bar in Sentiment, Country, or Media Type to filter";
+    }
+  }
+  document.getElementById("filterClearBtn").addEventListener("click", function(){
+    filter = { dim: null, value: null };
+    renderAll();
+  });
+
+  // ---------- Frequency chart (vertical, not clickable) ----------
+  function renderFrequencyChart(){
+    var filtered = applyFilter(DATA);
+    var counts = {};
+    ALL_DATES.forEach(function(d){ counts[d] = 0; });
+    filtered.forEach(function(d){ counts[d.date] = (counts[d.date]||0) + 1; });
+    var max = Math.max(1, Math.max.apply(null, ALL_DATES.map(function(d){return counts[d];})));
+
+    var chart = document.getElementById("freqChart");
+    chart.innerHTML = "";
+    ALL_DATES.forEach(function(dateStr){
+      var col = document.createElement("div");
+      col.className = "freq-bar-col";
+      col.tabIndex = 0;
+      var val = counts[dateStr];
+      var bar = document.createElement("div");
+      bar.className = "freq-bar" + (val === 0 ? " zero" : "");
+      var pct = Math.max(val / max * 100, val === 0 ? 3 : 6);
+      bar.style.height = pct + "%";
+      col.appendChild(bar);
+
+      var tipFn = function(){ showTooltip(col, { label: formatShortDate(dateStr) + ":", value: val + (val===1?" article":" articles") }); };
+      col.addEventListener("pointerenter", tipFn);
+      col.addEventListener("focus", tipFn);
+      col.addEventListener("pointerleave", hideTooltip);
+      col.addEventListener("blur", hideTooltip);
+      chart.appendChild(col);
+    });
+
+    var axis = document.getElementById("freqAxis");
+    axis.innerHTML = "";
+    var step = Math.ceil(ALL_DATES.length / 6);
+    ALL_DATES.forEach(function(dateStr, i){
+      if (i % step === 0 || i === ALL_DATES.length - 1){
+        var tick = document.createElement("span");
+        tick.textContent = formatShortDate(dateStr);
+        axis.appendChild(tick);
+      }
+    });
+  }
+
+  // ---------- Generic horizontal bar chart (clickable) ----------
+  function renderHBarChart(containerId, dim, order, colorFor){
+    var container = document.getElementById(containerId);
+    var isOwner = filter.dim === dim;
+    var sourceData = isOwner ? DATA : applyFilter(DATA);
+    var counts = countBy(sourceData, dim, order);
+    var max = Math.max(1, Math.max.apply(null, order.map(function(k){ return counts[k]; })));
+
+    container.innerHTML = "";
+    order.forEach(function(key, idx){
+      var row = document.createElement("div");
+      row.className = "hbar-row";
+
+      var label = document.createElement("div");
+      label.className = "hbar-label";
+      label.textContent = key;
+
+      var track = document.createElement("div");
+      track.className = "hbar-track";
+
+      var val = counts[key];
+      var fill = document.createElement("button");
+      fill.type = "button";
+      fill.className = "hbar-fill";
+      var widthPct = Math.max(val / max * 100, val === 0 ? 1 : 4);
+      fill.style.width = widthPct + "%";
+      fill.style.background = colorFor(key, idx);
+
+      var isSelected = filter.dim === dim && filter.value === key;
+      var isDimmedOut = isOwner && filter.dim === dim && filter.value && filter.value !== key;
+      fill.style.opacity = isDimmedOut ? "0.35" : "1";
+      if (isSelected){
+        fill.style.boxShadow = "0 0 0 2px var(--text-primary)";
+      }
+
+      fill.setAttribute("aria-pressed", isSelected ? "true" : "false");
+      fill.setAttribute("aria-label", key + ": " + val + " articles");
+
+      fill.addEventListener("click", function(){
+        if (filter.dim === dim && filter.value === key){
+          filter = { dim: null, value: null };
+        } else {
+          filter = { dim: dim, value: key };
+        }
+        renderAll();
+      });
+      fill.addEventListener("pointerenter", function(){ showTooltip(fill, { label: key + ":", value: val + (val===1?" article":" articles") }); });
+      fill.addEventListener("focus", function(){ showTooltip(fill, { label: key + ":", value: val + (val===1?" article":" articles") }); });
+      fill.addEventListener("pointerleave", hideTooltip);
+      fill.addEventListener("blur", hideTooltip);
+
+      var valueEl = document.createElement("div");
+      valueEl.className = "hbar-value";
+      valueEl.textContent = val;
+
+      track.appendChild(fill);
+      row.appendChild(label);
+      row.appendChild(track);
+      row.appendChild(valueEl);
+      container.appendChild(row);
+    });
+  }
+
+  // ---------- Table ----------
+  function renderTable(){
+    var filtered = applyFilter(DATA).slice().sort(function(a,b){ return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
+    var body = document.getElementById("tableBody");
+    body.innerHTML = "";
+
+    if (filtered.length === 0){
+      var tr = document.createElement("tr");
+      tr.className = "empty-row";
+      var td = document.createElement("td");
+      td.colSpan = 6;
+      td.textContent = "No articles match the current filter.";
+      tr.appendChild(td);
+      body.appendChild(tr);
+    } else {
+      filtered.forEach(function(d){
+        var tr = document.createElement("tr");
+
+        var tdDate = document.createElement("td");
+        tdDate.className = "date-col";
+        tdDate.textContent = d.date;
+
+        var tdHeadline = document.createElement("td");
+        tdHeadline.className = "headline-col";
+        tdHeadline.textContent = d.headline;
+
+        var tdSource = document.createElement("td");
+        tdSource.textContent = d.source;
+
+        var tdCountry = document.createElement("td");
+        tdCountry.textContent = d.country;
+
+        var tdMedia = document.createElement("td");
+        tdMedia.textContent = d.mediaType;
+
+        var tdSentiment = document.createElement("td");
+        var tag = document.createElement("span");
+        tag.className = "sentiment-tag " + d.sentiment;
+        var dot = document.createElement("span");
+        dot.className = "sentiment-dot";
+        var txt = document.createElement("span");
+        txt.textContent = d.sentiment;
+        tag.appendChild(dot);
+        tag.appendChild(txt);
+        tdSentiment.appendChild(tag);
+
+        tr.appendChild(tdDate);
+        tr.appendChild(tdHeadline);
+        tr.appendChild(tdSource);
+        tr.appendChild(tdCountry);
+        tr.appendChild(tdMedia);
+        tr.appendChild(tdSentiment);
+        body.appendChild(tr);
+      });
+    }
+
+    document.getElementById("tableSub").textContent =
+      "Showing " + filtered.length + " of " + DATA.length + " articles";
+  }
+
+  // ---------- Render orchestration ----------
+  function renderAll(){
+    renderStats();
+    renderFilterBar();
+    renderFrequencyChart();
+    renderHBarChart("sentimentChart", "sentiment", SENTIMENT_ORDER, function(key){ return SENTIMENT_COLORS[key]; });
+    renderHBarChart("countryChart", "country", COUNTRY_ORDER, function(key, idx){ return CAT_COLORS[idx % CAT_COLORS.length]; });
+    renderHBarChart("mediaTypeChart", "mediaType", MEDIA_ORDER, function(key, idx){ return CAT_COLORS[idx % CAT_COLORS.length]; });
+    renderTable();
+  }
+
+  renderAll();
+})();
+</script>
+</body>
+</html>
